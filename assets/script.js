@@ -31,14 +31,20 @@ document.addEventListener('DOMContentLoaded', function () {
           })
         });
 
-        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}`);
+        }
+
+        // Response is now a binary image (PNG)
+        const blob = await response.blob();
+        const imageUrl = URL.createObjectURL(blob);
 
         // Add image to gallery
         const imgContainer = document.createElement('div');
         imgContainer.style.cssText = 'text-align:center; margin:10px;';
 
         const img = document.createElement('img');
-        img.src = data.image;
+        img.src = imageUrl;
         img.style.cssText = 'width:200px; height:auto; border:1px solid #ccc; border-radius:5px;';
         img.alt = `Page ${i}`;
 
@@ -48,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Download single page button
         const dlBtn = document.createElement('a');
-        dlBtn.href = data.image;
+        dlBtn.href = imageUrl;
         dlBtn.download = `${childName}_coloring_page_${i}.png`;
         dlBtn.textContent = 'Download';
         dlBtn.style.cssText = 'font-size:11px; color:#4CAF50;';
@@ -58,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
         imgContainer.appendChild(dlBtn);
         gallery.appendChild(imgContainer);
 
-        generatedImages.push(data.image);
+        generatedImages.push(imageUrl);
       } catch (err) {
         console.error(`Error generating page ${i}:`, err);
         status.textContent = `Error on page ${i}. Try again.`;
@@ -67,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    status.textContent = `Done! ${totalPages} pages generated for ${childName}. Right-click images to save, or use the download links below each page.`;
+    status.textContent = `Done! ${totalPages} pages generated for ${childName}. Click "Download" under each page to save.`;
     button.disabled = false;
   });
 });

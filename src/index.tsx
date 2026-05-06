@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
 import { renderer } from './renderer'
-import { Ai } from '@cloudflare/ai'
 import script from '../assets/script.js'
 
 type Bindings = {
@@ -55,8 +54,6 @@ app.post('/ai', async (c) => {
   const json = await c.req.json()
   const { childName, theme, pageNumber } = json
 
-  const ai = new Ai(c.env.AI)
-
   const scenes = [
     'in a fun adventure',
     'playing in a garden',
@@ -83,16 +80,14 @@ app.post('/ai', async (c) => {
   const scene = scenes[(pageNumber - 1) % scenes.length]
   const prompt = `A simple black and white coloring book page for a child. The scene shows ${theme} ${scene}. Bold thick outlines, no shading, no gray, white background, suitable for ages 4-8. The name "${childName}" is written in bubble letters at the top of the page.`
 
-  const image: Uint8Array = await ai.run('@cf/stabilityai/stable-diffusion-xl-base-1.0', {
+  const response = await c.env.AI.run('@cf/stabilityai/stable-diffusion-xl-base-1.0', {
     prompt: prompt
   })
 
-  const binaryString = new Uint8Array(image).reduce((acc, byte) => acc + String.fromCharCode(byte), '')
-  const base64Image = btoa(binaryString)
-
-  return c.json({
-    image: `data:image/png;base64,${base64Image}`,
-    page: pageNumber
+  return new Response(response, {
+    headers: {
+      'Content-Type': 'image/png',
+    },
   })
 })
 
